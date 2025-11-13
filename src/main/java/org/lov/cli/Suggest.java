@@ -29,12 +29,14 @@ public class Suggest extends CmdGeneral {
 
 	private String vocabularyURI;
 	private Properties lovConfig;
+	private String ontologyFilePath;
 	
 	public Suggest(String[] args) {
 		super(args);
 		getUsage().startCategory("Arguments");
 		getUsage().addUsage("vocabularyURI", "URI of the vocabulary (e.g. http://...)");
 		getUsage().addUsage("configFilePath", "absolute path for the configuration file  (e.g. /home/...)");
+		getUsage().addUsage("ontologyFile", "Path to the RDF/OWL ontology file (e.g. /path/to/ontology.ttl)");
 	}
 	
 	@Override
@@ -53,6 +55,14 @@ public class Suggest extends CmdGeneral {
 			doHelp();
 		}
 		vocabularyURI = getPositionalArg(0);
+
+		if (getPositional().size() == 3) {
+			ontologyFilePath = getPositionalArg(2);
+		}
+		else{
+			ontologyFilePath = null;
+		}
+
 		try {
 			lovConfig = new Properties();
 			File file = new File(getPositionalArg(1));
@@ -68,7 +78,7 @@ public class Suggest extends CmdGeneral {
 	@Override
 	protected void exec() {
 		try {
-			VocabularySuggest result = LovBotVocabAnalyser.analyseVocabURI(vocabularyURI, lovConfig);
+			VocabularySuggest result = LovBotVocabAnalyser.analyseVocabURI(vocabularyURI, lovConfig, ontologyFilePath);
 //			result.prettyPrint(log);
 			Gson gson  =new Gson();
 			System.out.println(gson.toJson(result));
