@@ -12,7 +12,7 @@ PREFIX vann: <http://purl.org/vocab/vann/>
 SELECT ?description{
 
   # Check only the LOV metadata graph
-  GRAPH <http://localhost:3333/dataset/lov> {
+  GRAPH <http://lov_server:3333/dataset/lov> {
     ?vocab dct:description ?description .
   }
 }

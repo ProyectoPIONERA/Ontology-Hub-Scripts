@@ -1,0 +1,30 @@
+services:
+  maven_builder:
+    image: maven:3-jdk-8 # Imagen oficial con Maven 3 y JDK 8
+    container_name: maven_build_java8
+    working_dir: /usr/src/app # Directorio de trabajo dentro del contenedor
+    networks:
+      - Ontology_groups
+    volumes:
+      - .:/usr/src/app
+      - maven_cache:/root/.m2
+      - ontology_hub_folder:/app
+    command: >
+      /bin/bash -c "
+        sh createQueries.sh &&
+        mvn clean package -DskipTests && 
+        cp -r target/lovscripts-cli/lovscripts/* /app/scripts/ &&
+        cp lov.config /app/scripts
+        sh /app/setup/lovInitialization.sh
+      "
+
+networks:
+  Ontology_groups:
+    external: true
+    name: Ontology_group_network
+
+volumes:
+  ontology_hub_folder:
+    external: true
+    name: ontology_hub_folder
+  maven_cache:
