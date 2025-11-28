@@ -4,7 +4,7 @@ services:
     container_name: maven_build_java8
     working_dir: /usr/src/app # Directorio de trabajo dentro del contenedor
     networks:
-      - Ontology_groups
+      - Ontology_group
     volumes:
       - .:/usr/src/app
       - maven_cache:/root/.m2
@@ -19,7 +19,7 @@ services:
       "
 
 networks:
-  Ontology_groups:
+  Ontology_group:
     external: true
     name: Ontology_group_network
 
