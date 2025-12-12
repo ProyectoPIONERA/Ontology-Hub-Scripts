@@ -1,16 +1,7 @@
 package org.lov.cli;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.UnknownHostException;
-import java.util.Iterator;
-import java.util.Properties;
-
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
+import arq.cmdline.CmdGeneral;
+import com.hp.hpl.jena.tdb.TDBFactory;
 import org.lov.vocidex.VocidexDocument;
 import org.lov.vocidex.VocidexException;
 import org.lov.vocidex.VocidexIndex;
@@ -19,11 +10,9 @@ import org.lov.vocidex.extract.LOVExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import arq.cmdline.CmdGeneral;
-
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.shared.NotFoundException;
-
+import java.io.*;
+import java.net.UnknownHostException;
+import java.util.Properties;
 /**
  * A command line tool that indexes an LOV dump, adding all vocabularies
  * and their terms to the index. Uses {@link LOVExtractor}.
@@ -41,6 +30,7 @@ public class ElasticsearchIndexLOV extends CmdGeneral {
 	private String hostName;
 	private String indexName;
 	private String lovDumpFile;
+    private String lovTMPDumpPath;
 	
 	public ElasticsearchIndexLOV(String[] args) {
 		super(args);
@@ -69,6 +59,7 @@ public class ElasticsearchIndexLOV extends CmdGeneral {
 			clusterName = lovConfig.getProperty("ELASTICSEARCH_CLUSTER");
 			indexName = lovConfig.getProperty("ELASTICSEARCH_INDEX_NAME");
 			lovDumpFile = lovConfig.getProperty("LOV_NQ_FILE_PATH");
+            lovTMPDumpPath = lovConfig.getProperty("LOV_TMP_DUMP_PATH");
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -79,55 +70,65 @@ public class ElasticsearchIndexLOV extends CmdGeneral {
 
 	@Override
 	protected void exec() {
-		try {
-			log.info("Loading LOV dump: " + lovDumpFile);
-			Dataset dataset = RDFDataMgr.loadDataset(lovDumpFile, Lang.NQUADS);
-			long graphCount = 0;
-			long tripleCount = dataset.getDefaultModel().size();
-			Iterator<String> it = dataset.listNames();
-			String aux;
-			while (it.hasNext()) {
-				graphCount++;
-				aux = it.next();
-				System.out.println(aux);
-				tripleCount += dataset.getNamedModel(aux).size();
-			}
-			log.info("Read " + tripleCount + " triples in " + graphCount + " graphs");
 
-			VocidexIndex index = new VocidexIndex(clusterName, hostName, indexName);
-			try {
-				if (!index.exists()) {
-					throw new VocidexException("Index '" + indexName + "' does not exist on the cluster. Create the index first!");
-				}
-				
-				/* Process Agents */
-				log.info("--Inserting Agents--");
-				AgentsExtractor agentExtractor = new AgentsExtractor(dataset);
-				int cpt=0;
-				for (VocidexDocument document: agentExtractor) {
-					index.addDocument(document);
-					cpt++;
-				}
-				log.info(cpt+ " Agents inserted");
-				
-				LOVExtractor lovTransformer = new LOVExtractor(dataset);
-				System.out.println("Hola");
-				for (VocidexDocument document: lovTransformer) {
-					log.info("Indexing " + document.getId());
-					System.out.println(document.getJSONContents());
-					index.addDocument(document);
-				}
-				log.info("Done!");
-			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} finally {
-				index.close();
-			}
-		} catch (NotFoundException ex) {
-			cmdError("Not found: " + ex.getMessage());
-		} catch (VocidexException ex) {
-			cmdError(ex.getMessage());
-		}
-	}
+        try {
+            log.info("Loading LOV dump into TDB (disk): " + lovDumpFile);
+
+            String tdbDir = lovTMPDumpPath;
+
+            com.hp.hpl.jena.query.Dataset dataset = TDBFactory.createDataset(tdbDir);
+
+            // Ingesta del N-Quads al dataset en disco
+            org.apache.jena.riot.RDFDataMgr.read(dataset, lovDumpFile, org.apache.jena.riot.Lang.NQUADS);
+
+            long graphCount = 0L;
+            long tripleCount = dataset.getDefaultModel().size();
+            java.util.Iterator<String> it = dataset.listNames();
+            String aux;
+            while (it.hasNext()) {
+                graphCount++;
+                aux = it.next();
+
+                tripleCount += dataset.getNamedModel(aux).size();
+            }
+            log.info("Read " + tripleCount + " triples in " + graphCount + " graphs");
+            log.info("Hostname: " + hostName);
+            VocidexIndex index = new VocidexIndex(clusterName, hostName, indexName);
+            try {
+                if (!index.exists()) {
+                    throw new VocidexException("Index '" + indexName + "' does not exist on the cluster. Create the index first!");
+                }
+
+                /* Process Agents */
+                log.info("--Inserting Agents--");
+                AgentsExtractor agentExtractor = new AgentsExtractor(dataset);
+                int cpt = 0;
+                for (VocidexDocument document : agentExtractor) {
+                    index.addDocument(document);
+                    cpt++;
+                }
+                log.info(cpt + " Agents inserted");
+
+                /* Process LOV */
+                log.info("--Inserting LOV--");
+                LOVExtractor lovTransformer = new LOVExtractor(dataset);
+                for (VocidexDocument document : lovTransformer) {
+                    log.info("Indexing " + document.getId());
+
+                    index.addDocument(document);
+                }
+                log.info("Done!");
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } finally {
+                index.close();
+                dataset.close();
+            }
+        } catch (com.hp.hpl.jena.shared.NotFoundException ex) {
+            cmdError("Not found: " + ex.getMessage());
+        } catch (org.lov.vocidex.VocidexException ex) {
+            cmdError(ex.getMessage());
+        }
+
+    }
 }

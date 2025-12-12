@@ -77,6 +77,8 @@ public class VocidexIndex implements Closeable {
 		System.out.println("Ha entrado7");
 		if (!setMapping("organization", "mappings/organization.json")) return false;
 		System.out.println("Ha entrado8");
+        if (!setMapping("individual", "mappings/individual.json")) return false;
+        System.out.println("Ha entrado9");
 		
 		return true;
 	}
@@ -94,7 +96,7 @@ public class VocidexIndex implements Closeable {
 	 * @return The document's id
 	 */
 	public String addDocument(VocidexDocument document) {
-		return client
+        return client
 				.prepareIndex(indexName, document.getType(), document.getId())
 				.setSource(document.getJSONContents())
 				.execute().actionGet().getId();
