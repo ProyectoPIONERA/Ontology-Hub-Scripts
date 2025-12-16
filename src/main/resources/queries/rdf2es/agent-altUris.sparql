@@ -1,9 +1,0 @@
-PREFIX owl:  <http://www.w3.org/2002/07/owl#>
-
-# Get AltUris (owl:sameAs) for one agent
-SELECT DISTINCT ?altUri {
-  # Check only the LOV metadata graph
-  GRAPH <http://localhost:3333/dataset/lov> {
-    ?agent owl:sameAs ?altUri.
-  }
-}
