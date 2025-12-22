@@ -14,8 +14,8 @@ services:
         sh createQueries.sh &&
         mvn clean package -DskipTests && 
         cp -r target/lovscripts-cli/lovscripts/* /app/scripts/ &&
-        cp lov.config /app/scripts
-        sh /app/setup/lovInitialization.sh
+        
+        bash /app/setup/lovInitialization.sh
       "
 
 networks:
