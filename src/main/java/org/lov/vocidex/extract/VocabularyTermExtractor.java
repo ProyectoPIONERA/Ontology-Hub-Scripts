@@ -3,6 +3,7 @@ package org.lov.vocidex.extract;
 import java.util.Iterator;
 
 import org.lov.SPARQLRunner;
+import org.lov.vocidex.describers.IndividualDescriber;
 import org.lov.vocidex.VocidexDocument;
 import org.lov.vocidex.describers.ClassDescriber;
 import org.lov.vocidex.describers.DatatypeDescriber;
@@ -63,12 +64,17 @@ public class VocabularyTermExtractor implements Extractor {
 		return createDescriptionIterator("list-instances.sparql", "instance", new InstanceDescriber(source, prefix,tag));
 	}
 
+    public Iterator<VocidexDocument> individuals() {
+        System.out.println("Executes Individuals");
+        return createDescriptionIterator("list-individuals.sparql", "individual", new IndividualDescriber(source, prefix,tag));
+    }
+
 	/**
 	 * Extract all terms (classes, properties, datatypes)
 	 */
 	@Override
 	public Iterator<VocidexDocument> iterator() {
-		return NiceIterator.andThen(classes(), properties()).andThen(datatypes()).andThen(instances());
+		return NiceIterator.andThen(classes(), properties()).andThen(datatypes()).andThen(instances()).andThen(individuals());
 	}
 	
 	private Iterator<VocidexDocument> createDescriptionIterator(

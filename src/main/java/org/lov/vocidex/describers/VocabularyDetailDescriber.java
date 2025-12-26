@@ -8,6 +8,8 @@ import org.lov.vocidex.extract.VocabularyTermExtractor;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
+import java.util.Objects;
+
 /**
  * Describes a vocabulary provided in an RDF graph by describing
  * the details of all classes, properties and datatypes.
@@ -41,17 +43,23 @@ public class VocabularyDetailDescriber extends SPARQLDescriber {
 		ArrayNode classes = mapper.createArrayNode();
 		ArrayNode properties = mapper.createArrayNode();
 		ArrayNode datatypes = mapper.createArrayNode();
+        ArrayNode individuals = mapper.createArrayNode();
 		for (VocidexDocument document: new VocabularyTermExtractor(getSource(), prefix, null)) {
-			if (document.getType() == ClassDescriber.TYPE) {
+            System.out.println("TIPO DE DOCUMENTO => " + document.getType());
+			if (Objects.equals(document.getType(), ClassDescriber.TYPE)) {
 				classes.add(document.getRoot());
-			} else if (document.getType() == PropertyDescriber.TYPE) {
+			} else if (Objects.equals(document.getType(), PropertyDescriber.TYPE)) {
 				properties.add(document.getRoot());
-			} else if (document.getType() == DatatypeDescriber.TYPE) {
-				datatypes.add(document.getRoot());
-			}
+			} else if (Objects.equals(document.getType(), DatatypeDescriber.TYPE)) {
+                datatypes.add(document.getRoot());
+            } else if (Objects.equals(document.getType(), IndividualDescriber.TYPE)) {
+                individuals.add(document.getRoot());
+                System.out.println("Size of the array" + individuals.size());
+            }
 		}
 		descriptionRoot.put("classes", classes);
 		descriptionRoot.put("properties", properties);
 		descriptionRoot.put("datatypes", datatypes);
+        descriptionRoot.put("individuals", individuals);
 	}
 }

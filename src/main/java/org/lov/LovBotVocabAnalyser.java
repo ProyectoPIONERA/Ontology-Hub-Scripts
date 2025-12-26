@@ -8,6 +8,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.jongo.Jongo;
@@ -27,6 +32,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.mongodb.MongoClient;
+import com.hp.hpl.jena.util.FileUtils;
 
 
 public class LovBotVocabAnalyser {
@@ -37,25 +43,50 @@ public class LovBotVocabAnalyser {
 	 **/
 	public static VocabularySuggest analyseVersion(String vocabularyversionURL, String vocabularyURI, String vocabularyNsp, Lang lang, Properties lovConfig) throws Exception{
 		log.info("LOV BOT is analysing the version file : " + vocabularyversionURL);
-		return analyse(vocabularyversionURL, vocabularyURI, vocabularyNsp, lang, lovConfig);
+		return analyse(vocabularyversionURL, vocabularyURI, vocabularyNsp, lang, lovConfig, null);
 	}
 	
 	/**
 	 * This function dereferentiate the vocabulary URI adn get all information possible without any previous knowledge 
 	 **/
-	public static VocabularySuggest analyseVocabURI(String vocabularyURI, Properties lovConfig) throws Exception{
+	public static VocabularySuggest analyseVocabURI(String vocabularyURI, Properties lovConfig, String ontologyFilePath) throws Exception{
 		//log.info("LOV BOT is analysing the vocabulary URI: " + vocabularyURI);
-		return analyse(vocabularyURI, null, null,null, lovConfig);
+		return analyse(vocabularyURI, null, null,null, lovConfig, ontologyFilePath);
 	}
 	
-	private static VocabularySuggest analyse(String uriToAnalayse,String vocabURI, String vocabNsp, Lang lang, Properties lovConfig) throws Exception{
+	private static VocabularySuggest analyse(String uriToAnalayse,String vocabURI, String vocabNsp, Lang lang, Properties lovConfig, String ontologyFilePath) throws Exception{
 			
 			MongoClient mongoClient = new MongoClient( lovConfig.getProperty("MONGO_DB_HOST") , Integer.parseInt(lovConfig.getProperty("MONGO_DB_PORT")) );
 			Jongo jongo = new Jongo(mongoClient.getDB( lovConfig.getProperty("MONGO_DB_INSTANCE") ));
+			
+			//hay que cambiar esto haciendo un if(uri) las tres lineas de debajo, else(codigo) lo nuevo
 			//read from the URI and load it in a model
 			Model vocab;
-			if(lang!=null)vocab= RDFDataMgr.loadModel(uriToAnalayse,lang); //try to read from the URI and load it in a model
-			else vocab= RDFDataMgr.loadModel(uriToAnalayse);
+
+			if(ontologyFilePath != null){
+				vocab = ModelFactory.createDefaultModel();
+				try (InputStream in = new FileInputStream(ontologyFilePath)) {
+				// Read the ontology file content into a Jena Model
+				vocab.read(in, uriToAnalayse, FileUtils.guessLang(ontologyFilePath)); 
+				log.info("Successfully loaded ontology from file: " + ontologyFilePath);
+				} catch (FileNotFoundException e) {
+					throw new Exception("Ontology file not found: " + ontologyFilePath);
+				} catch (IOException e) {
+					throw new Exception("Error reading ontology file: " + e.getMessage());
+				}
+			}
+			else{
+				if(lang!=null)vocab= RDFDataMgr.loadModel(uriToAnalayse,lang); //try to read from the URI and load it in a model
+				else vocab= RDFDataMgr.loadModel(uriToAnalayse);
+			}
+			
+			/*lo nuevo
+			ontologyContent es un string pasado como parametro
+			Model vocab = ModelFactory.createDefaultModel();
+			ByteArrayInputStream inputStream = 
+				new ByteArrayInputStream(ontologyContent.getBytes(StandardCharsets.UTF_8));
+			RDFDataMgr.read(vocab, inputStream, null, null); // auto-detect syntax
+			*/
 			
 			
 			VocabularySuggest result = new VocabularySuggest();
