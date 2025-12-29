@@ -1,73 +1,73 @@
 # Ontology Hub Scripts
 
-Colección de scripts en **Java** y **Shell** para automatizar tareas del *Ontology Hub* en el proyecto **PIONERA**. Incluye herramientas para generación de consultas, respaldo de Linked Open Vocabularies (LOV) y empaquetado del proyecto.
+A collection of **Java** and **Shell** scripts designed to automate essential tasks for the *Ontology Hub* within the **PIONERA** project. These tools support query generation, Linked Open Vocabularies (LOV) backup, and project packaging.
 
-## 🚧 Estado del Proyecto
+## 🚧 Project Status
 
-Activamente en desarrollo. La API y los comandos pueden cambiar entre versiones menores.
-
----
-
-## Tabla de Contenidos
-
-- [Contexto y Propósito](#contexto-y-propósito)
-- [Características Principales](#características-principales)
-- [Estructura del Repositorio](#estructura-del-repositorio)
-- [Requisitos](#requisitos)
-- [Instalación](#instalación)
-- [Uso](#uso)
-- [Cómo Contribuir](#cómo-contribuir)
-- [Hoja de Ruta](#hoja-de-ruta)
-- [Agradecimientos y Financiación](#agradecimientos-y-financiación)
-- [Autores y Contacto](#autores-y-contacto)
-- [Licencia](#licencia)
+This repository is actively under development. APIs and commands may change between minor versions.
 
 ---
 
-## Contexto y Propósito
+## Table of Contents
 
-El *PIONERA Ontology Hub* actúa como punto central para almacenar, validar y publicar ontologías en los casos de uso del proyecto. Este repositorio contiene scripts que automatizan tareas clave como generación de consultas, respaldo de LOV y procesamiento de ontologías.
+- [Context and Purpose](#context-and-purpose)
+- [Key Features](#key-features)
+- [Repository Structure](#repository-structure)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [How to Contribute](#how-to-contribute)
+- [Roadmap](#roadmap)
+- [Acknowledgments and Funding](#acknowledgments-and-funding)
+- [Authors and Contact](#authors-and-contact)
+- [License](#license)
 
 ---
 
-## Características Principales
+## Context and Purpose
 
-- Generación de consultas mediante `createQueries.sh`.
-- Respaldo de vocabularios LOV con `lovBackup.sh`.
-- Configuración de endpoints y parámetros mediante archivos de ejemplo (`lov.example.config`).
-- Construcción y empaquetado del proyecto Java con Maven (`pom.xml`, `assembly.xml`).
-- Herramientas avanzadas en CLI para procesamiento RDF e indexación en Elasticsearch.
+The *PIONERA Ontology Hub* serves as a central platform for storing, validating, and publishing ontologies used across project scenarios. This repository provides scripts that automate critical tasks such as SPARQL query generation, LOV backups, and ontology processing.
 
 ---
 
-## Estructura del Repositorio
+## Key Features
+
+- Generate SPARQL queries using `createQueries.sh`.
+- Backup LOV vocabularies with `lovBackup.sh`.
+- Configure endpoints and parameters via example configuration files (`lov.example.config`).
+- Build and package Java projects using Maven (`pom.xml`, `assembly.xml`).
+- Advanced CLI tools for RDF processing and Elasticsearch indexing.
+
+---
+
+## Repository Structure
 
 ```text
 Ontology-Hub-Scripts/
-├── createQueries.sh           # Generar consultas SPARQL
-├── lovBackup.sh               # Respaldo de vocabularios LOV
-├── lov.example.config         # Plantilla de configuración LOV
-├── pom.xml                    # Build con Maven
-├── assembly.xml               # Empaquetado JAR
-├── src/main/java/org/lov/cli/ # Herramientas CLI (Aggregator, Rdf2mongo, etc.)
-├── src/main/resources/queries/ # +100 archivos SPARQL
-└── src/main/resources/mappings/ # Mapeos JSON para indexación
+├── createQueries.sh           # Generate SPARQL queries
+├── lovBackup.sh               # Backup LOV vocabularies
+├── lov.example.config         # LOV configuration template
+├── pom.xml                    # Maven build file
+├── assembly.xml               # JAR packaging
+├── src/main/java/org/lov/cli/ # CLI tools (Aggregator, Rdf2mongo, etc.)
+├── src/main/resources/queries/ # Over 100 SPARQL query files
+└── src/main/resources/mappings/ # JSON mappings for indexing
 ```
 
 ---
 
-## Requisitos
+## Requirements
 
-- **Java 17+**
+- **Java 17 or higher**
 - **Maven 3.6+**
-- **Shell POSIX** (bash/zsh)
-- Acceso al endpoint del Ontology Hub
+- **POSIX-compliant shell** (bash/zsh)
+- Access to the Ontology Hub endpoint
 
 ---
 
-## Instalación
+## Installation
 
-1. Validar entorno:
+1. Verify your environment:
 
    ```bash
    java -version
@@ -75,7 +75,7 @@ Ontology-Hub-Scripts/
    mvn -v
    ```
 
-   Salida esperada:
+   Expected output:
 
    ```text
    openjdk version "17.0.17" 2025-10-21
@@ -83,89 +83,89 @@ Ontology-Hub-Scripts/
    Apache Maven 3.9.11
    ```
 
-2. Clonar repositorio:
+2. Clone the repository:
 
    ```bash
    git clone https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts.git
    cd Ontology-Hub-Scripts
    ```
 
-3. Construir proyecto:
+3. Build the project:
 
    ```bash
    mvn clean package
    ```
 
-   Debes ver el mensaje **BUILD SUCCESS**. Esto generará artefactos ejecutables (por ejemplo, un JAR en `target/`).
+   You should see **BUILD SUCCESS**. This will generate executable artifacts (e.g., a JAR file in `target/`).
 
 ---
 
-## Uso
+## Usage
 
-### Ejecutar Scripts Shell (desde el directorio raíz)
+### Running Shell Scripts (from the root directory)
 
-Renombra `lov.example.config` a `lov.config` y edítalo según tu configuración.
+Rename `lov.example.config` to `lov.config` and update it according to your configuration.
 
-- Generar consultas SPARQL para datos LOV:
+- Generate SPARQL queries for LOV data:
 
    ```bash
    ./createQueries.sh
    ```
 
-- Respaldar vocabularios LOV usando archivo de configuración:
+- Backup LOV vocabularies using a configuration file:
 
    ```bash
    ./lovBackup.sh --config lov.example.config
    ```
 
-### Ejecutar Herramientas Java CLI (después de compilar)
+### Running Java CLI Tools (after compilation)
 
-- Ejecutar herramienta **Aggregator** para procesamiento RDF:
+- Execute the **Aggregator** tool for RDF processing:
 
    ```bash
    java -cp target/classes org.lov.cli.Aggregator
    ```
 
-- Ejecutar herramienta de indexación en Elasticsearch:
+- Execute the Elasticsearch indexing tool:
 
    ```bash
    java -cp target/classes org.lov.cli.ElasticsearchIndexLOV
    ```
 
-**Notas:**
-- Los scripts Shell están basados en bash.
-- Las herramientas Java dependen de la compilación previa (`mvn clean package`).
+**Notes:**
+- Shell scripts require bash.
+- Java tools depend on prior compilation (`mvn clean package`).
 
 ---
 
-## Cómo Contribuir
+## How to Contribute
 
-- Abre *issues* para reportar errores o solicitar funcionalidades.
-- Haz *fork* y crea ramas siguiendo el estilo del proyecto.
-- Envía *pull requests* referenciando los *issues*.
-
----
-
-## Hoja de Ruta
-
-- Scripts adicionales para integración con PIONERA.
-- Mejora en reportes de validación.
-- Documentación y pruebas ampliadas.
+- Open *issues* to report bugs or request new features.
+- Fork the repository and create branches following the project guidelines.
+- Submit *pull requests* referencing related *issues*.
 
 ---
 
-## Agradecimientos y Financiación
+## Roadmap
 
-Parte del proyecto **PIONERA**, financiado parcialmente por [grant/program].
-
----
-
-## Autores y Contacto
-
-- Equipo de Ontologías PIONERA  
-- Contacto: *[Ontology Engineering Group](https://oeg.fi.upm.es)*, *[Universidad Politécnica de Madrid](https://www.upm.es/internacional)*.
+- Additional scripts for PIONERA integration.
+- Enhanced validation reporting.
+- Extended documentation and testing.
 
 ---
 
-## Licencia 🔓
-Ontology Hub Scripts está disponible bajo la Licencia Apache 2.0.
+## Acknowledgments and Funding
+
+This work is part of the **PIONERA** project, partially funded by [grant/program].
+
+---
+
+## Authors and Contact
+
+- PIONERA Ontologies Team
+- Contact: *[Ontology Engineering Group](https://oeg.fi.upm.es)*, *[Universidad Politécnica de Madrid](https://www.upm.es/internacional)*.
+
+---
+
+## License 🔓
+Ontology Hub Scripts is distributed under the Apache License 2.0.
