@@ -126,13 +126,13 @@ public class Aggregator extends CmdGeneral {
 			log.info(cptUpdated+" vocabulary updated");
 			log.info("####### </Aggregator> #######");
 		} catch (FileNotFoundException e) {
-			cmdError("Not found: " + e.getMessage());
-			e.printStackTrace();
+			//cmdError("Not found: " + e.getMessage());
+			//e.printStackTrace();
 		} catch (IOException e) {
-			cmdError("IO Exception: " + e.getMessage());
-			e.printStackTrace();
+			//cmdError("IO Exception: " + e.getMessage());
+			//e.printStackTrace();
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	}
 	
@@ -251,11 +251,11 @@ public class Aggregator extends CmdGeneral {
 						vocabCollection.save(vocab);
 //					}
 				} catch (FileNotFoundException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				} catch (IOException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				} catch (Exception e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 			}
 		}
@@ -321,12 +321,12 @@ public class Aggregator extends CmdGeneral {
 	
 	private void shutdownAndAwaitTermination(ExecutorService pool) {
 	   pool.shutdown(); // Disable new tasks from being submitted
-	   System.out.println("pool.shutdown()");
+	   //System.out.println("pool.shutdown()");
 	   try {
 	     // Wait a while for existing tasks to terminate
 	     if (!pool.awaitTermination(20, TimeUnit.SECONDS)) {
 	       pool.shutdownNow(); // Cancel currently executing tasks
-	       System.out.println("pool.shutdownNow()");
+	       //System.out.println("pool.shutdownNow()");
 	       // Wait a while for tasks to respond to being cancelled
 	       if (!pool.awaitTermination(20, TimeUnit.SECONDS)){}
 	    	 
