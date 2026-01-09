@@ -167,5 +167,13 @@ This work is part of the **PIONERA** project, partially funded by [grant/program
 
 ---
 
+## Funding
+
+This work has received funding from the PIONERA project (Enhancing interoperability in data spaces through artificial intelligence), a project funded in the context of the call for Technological Products and Services for Data Spaces of the Ministry for Digital Transformation and Public Administration within the framework of the PRTR funded by the European Union (NextGenerationEU)
+
+<div align="center">
+  <img src="Logos financiación.png" alt="Logos financiación" width="900" />
+</div>
+
 ## License 🔓
 Ontology Hub Scripts is distributed under the Apache License 2.0.
