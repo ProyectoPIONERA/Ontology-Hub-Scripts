@@ -177,4 +177,4 @@ This work has received funding from the PIONERA project (Enhancing interoperabil
 
 ## License
 
-Mapping Editor is available under the **[Apache License 2.0](https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts/blob/main/LICENSE)**.
+Ontology Hub Scripts is available under the **[Apache License 2.0](https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts/blob/main/LICENSE)**.
