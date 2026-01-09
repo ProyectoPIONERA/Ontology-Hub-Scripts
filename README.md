@@ -175,5 +175,6 @@ This work has received funding from the PIONERA project (Enhancing interoperabil
   <img src="funding_label.png" alt="Logos financiación" width="900" />
 </div>
 
-## License 🔓
-Ontology Hub Scripts is distributed under the Apache License 2.0.
+## License
+
+Mapping Editor is available under the **[Apache License 2.0](https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts/blob/main/LICENSE)**.
