@@ -1,6 +1,6 @@
 
 #!/bin/sh
-set -eu
+set -e -u
 
 # Lee la URI desde lov.config, elimina CR/LF y TRIMEA espacios al inicio/fin
 read_config_value() {
