@@ -116,3 +116,4 @@ createQuery "./src/main/resources/queries/list-properties.sparql" "./src/main/re
 createQuery "./src/main/resources/queries/list-datatypes.sparql" "./src/main/resources/queries/rdf2es/list-datatypes.sparql"
 createQuery "./src/main/resources/queries/list-instances.sparql" "./src/main/resources/queries/rdf2es/list-instances.sparql"
 createQuery "./src/main/resources/queries/term-label.sparql" "./src/main/resources/queries/rdf2es/term-label.sparql"
+createQuery "./src/main/resources/queries/term-labels.sparql" "./src/main/resources/queries/rdf2es/term-labels.sparql"
