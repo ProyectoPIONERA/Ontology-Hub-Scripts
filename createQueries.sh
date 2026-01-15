@@ -1,4 +1,3 @@
-
 #!/bin/sh
 set -e -u
 
@@ -111,3 +110,8 @@ createQuery "./src/main/resources/queries/dynamic/lov-vocabulary-languages.sparq
 createQuery "./src/main/resources/queries/dynamic/lov-vocabulary-terms.sparql" "./src/main/resources/queries/rdf2es/lov-vocabulary-terms.sparql"
 createQuery "./src/main/resources/queries/dynamic/lov-term-metrics-2.sparql" "./src/main/resources/queries/lov-term-metrics.sparql"
 createQuery "./src/main/resources/queries/dynamic/lov-vocabulary-terms-2.sparql" "./src/main/resources/queries/lov-vocabulary-terms.sparql"
+
+createQuery "./src/main/resources/queries/list-classes.sparql" "./src/main/resources/queries/rdf2es/list-classes.sparql"
+createQuery "./src/main/resources/queries/list-properties.sparql" "./src/main/resources/queries/rdf2es/list-properties.sparql"
+createQuery "./src/main/resources/queries/list-datatypes.sparql" "./src/main/resources/queries/rdf2es/list-datatypes.sparql"
+createQuery "./src/main/resources/queries/list-instances.sparql" "./src/main/resources/queries/rdf2es/list-instances.sparql"
