@@ -23,6 +23,9 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.util.FileUtils;
+import org.lov.cli.Aggregator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Convenience class for running SPARQL queries stored in files against
@@ -33,7 +36,8 @@ import com.hp.hpl.jena.util.FileUtils;
 public class SPARQLRunner {
 	private final Dataset dataset;
 	private final String subfolder;
-	
+	private final Logger logger = LoggerFactory.getLogger(SPARQLRunner.class);
+
 	public SPARQLRunner(Model model) {
 		this(DatasetFactory.create(model),null);
 	}
@@ -184,6 +188,7 @@ public class SPARQLRunner {
 	}
 	
 	private Query getQuery(String filename) {
+        logger.info("FILENAME = " + filename);
 		if (!queryCache.containsKey(filename)) {
 			try {
 				return QueryFactory.create(FileUtils.readWholeFileAsUTF8(

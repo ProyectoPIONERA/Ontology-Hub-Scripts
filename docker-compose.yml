@@ -11,10 +11,12 @@ services:
       - ontology_hub_folder:/app
     command: >
       /bin/bash -c "
+        mkdir -p src/main/resources/queries/rdf2es &&
+        cp lov.example.config lov.config &&
         sh createQueries.sh &&
         mvn clean package -DskipTests && 
         cp -r target/lovscripts-cli/lovscripts/* /app/scripts/ &&
-        
+        cp lov.example.config /app/scripts/lov.config &&
         bash /app/setup/lovInitialization.sh
       "
 

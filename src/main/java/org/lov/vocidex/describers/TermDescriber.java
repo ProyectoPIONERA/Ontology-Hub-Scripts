@@ -48,7 +48,9 @@ public abstract class TermDescriber extends SPARQLDescriber {
 			descriptionRoot.put("prefixedName", prefix + ":" + getLocalName(term));
 		};
 		putString(descriptionRoot, "localName", getLocalName(term));
-		
+
+
+
 //		List<Literal> labels = getRDFSLabels(term);
 //		List<String> labelsString = new ArrayList<String>();
 //		if(labels!=null){
@@ -57,7 +59,11 @@ public abstract class TermDescriber extends SPARQLDescriber {
 //			}
 //			if(labelsString.size()>0)putArrayString(descriptionRoot, "labelsWithoutLang", labelsString);
 //		}
-		putString(descriptionRoot, "labelsWithoutLang", getLabelFromSource(term));
+		//putString(descriptionRoot, "labelsWithoutLang", getLabelFromSource(term));
+        String label = getLabelFromSource(term);
+        if (label != null) {
+            putString(descriptionRoot, "labelsWithoutLang", label);
+        }
 		if(tag!=null)putArrayString(descriptionRoot, "tags", tag);
 		// Adds "label" key
 		strLiteralDescriber.describe(term, descriptionRoot);
