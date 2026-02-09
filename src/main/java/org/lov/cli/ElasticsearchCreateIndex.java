@@ -5,7 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.UnknownHostException;
+import java.io.IOException;
 import java.util.Properties;
 
 import org.lov.vocidex.VocidexIndex;
@@ -80,7 +80,7 @@ public class ElasticsearchCreateIndex extends CmdGeneral {
 			} else {
 				log.error("Error: Index creation not acknowledged!");
 			}
-		} catch (UnknownHostException e) {
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {

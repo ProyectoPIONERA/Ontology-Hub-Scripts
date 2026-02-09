@@ -1,13 +1,19 @@
 package org.lov.vocidex;
 
 import java.io.Closeable;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.IOException;
+import java.util.Properties;
 
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.client.Requests;
-import org.elasticsearch.client.transport.TransportClient;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 
 
 /**
@@ -16,89 +22,123 @@ import org.elasticsearch.client.transport.TransportClient;
  * @author Richard Cyganiak
  */
 public class VocidexIndex implements Closeable {
-	private final String clusterName;
 	private final String hostName;
 	private final String indexName;
-	private TransportClient client = null;
+	private final String password;
+	private ElasticsearchClient client = null;
+	private RestClient restClient = null;
 	
 	public VocidexIndex(String clusterName, String hostName, String indexName) {
-		this.clusterName = clusterName;
 		this.hostName = hostName;
 		this.indexName = indexName;
+		this.password = "OntologyHub2026"; // Default password from configuration
+	}
+	
+	public VocidexIndex(String clusterName, String hostName, String indexName, String password) {
+		this.hostName = hostName;
+		this.indexName = indexName;
+		this.password = password;
 	}
 
 	/**
 	 * Connects to the cluster if not yet connected. Is called implicitly by
 	 * all operations that require a connection. 
-	 * @throws UnknownHostException 
+	 * @throws IOException 
 	 */
-	public void connect() throws UnknownHostException {
+	public void connect() throws IOException {
 		if (client != null) return;
-		Settings settings = Settings.builder()
-		        .put("cluster.name", clusterName).build();
+		
+		final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+		credentialsProvider.setCredentials(AuthScope.ANY, 
+			new UsernamePasswordCredentials("elastic", password));
 
-		client = TransportClient.builder().settings(settings).build().addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(hostName), 9300));
+		RestClientBuilder builder = RestClient.builder(new HttpHost(hostName, 9200))
+			.setHttpClientConfigCallback(httpClientBuilder -> 
+				httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+
+		restClient = builder.build();
+		RestClientTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+		client = new ElasticsearchClient(transport);
 	}
 	
 	public void close() {
-		if (client == null) return;
-		client.close();
+		try {
+			if (restClient != null) {
+				restClient.close();
+			}
+		} catch (IOException e) {
+			// Ignore close errors
+		}
+		restClient = null;
 		client = null;
 	}
 	
-	public boolean exists() throws UnknownHostException {
+	public boolean exists() throws IOException {
 		connect();
-		return client.admin().indices().exists(Requests.indicesExistsRequest(indexName)).actionGet().isExists();
+		return client.indices().exists(exists -> exists.index(indexName)).value();
 	}
 	
-	public void delete() throws UnknownHostException {
+	public void delete() throws IOException {
 		connect();
-		client.admin().indices().prepareDelete(indexName).execute();		
+		client.indices().delete(delete -> delete.index(indexName));		
 	}
 	
-	public boolean create() throws UnknownHostException {
+	public boolean create() throws IOException {
 		connect();
-		//create index with specific settings
-		if (!client.admin().indices().create(Requests.createIndexRequest(indexName).settings(JSONHelper.readFile("mappings/settings.json"))).actionGet().isAcknowledged()) {
-			return false;
+		
+		// Read settings from the new mappings location
+		String settings = JSONHelper.readFile("/Users/alexel200/Downloads/Pionera/Ontology-Hub/app/elastic/mappings/settings.json");
+		
+		// Create index with specific settings
+		client.indices().create(create -> 
+			create.index(indexName)
+				.withJson(new java.io.StringReader(settings))
+		);
+		
+		System.out.println("Index created with settings");
+		
+		// Apply mappings using new paths
+		String[] mappings = {
+			"class", "property", "datatype", "instance", "vocabulary", 
+			"person", "organization", "individual"
+		};
+		
+		for (String mapping : mappings) {
+			String mappingPath = "/Users/alexel200/Downloads/Pionera/Ontology-Hub/app/elastic/mappings/" + mapping + ".json";
+			if (!setMapping(mapping, mappingPath)) {
+				return false;
+			}
+			System.out.println("Mapping applied for: " + mapping);
 		}
-		System.out.println("Ha entrado");
-		if (!setMapping("class", "mappings/class.json")) return false;
-		System.out.println("Ha entrado2");
-		if (!setMapping("property", "mappings/property.json")) return false;
-		System.out.println("Ha entrado3");
-		if (!setMapping("datatype", "mappings/datatype.json")) return false;
-		System.out.println("Ha entrado4");
-		if (!setMapping("instance", "mappings/instance.json")) return false;
-		System.out.println("Ha entrado5");
-		if (!setMapping("vocabulary", "mappings/vocabulary.json")) return false;
-		System.out.println("Ha entrado6");
-		if (!setMapping("person", "mappings/person.json")) return false;
-		System.out.println("Ha entrado7");
-		if (!setMapping("organization", "mappings/organization.json")) return false;
-		System.out.println("Ha entrado8");
-        if (!setMapping("individual", "mappings/individual.json")) return false;
-        System.out.println("Ha entrado9");
 		
 		return true;
 	}
 	
 	public boolean setMapping(String type, String jsonConfigFile) {
-		String json = JSONHelper.readFile(jsonConfigFile);
-		if (!client.admin().indices().preparePutMapping().setIndices(indexName).setType(type).setSource(json).execute().actionGet().isAcknowledged()) {
+		try {
+			connect();
+			String json = JSONHelper.readFile(jsonConfigFile);
+			client.indices().putMapping(put -> 
+				put.index(indexName)
+					.withJson(new java.io.StringReader(json))
+			);
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
 			return false;
 		}
-		return true;
 	}
 	
 	/**
 	 * Adds a document (that is, a JSON structure) to the index.
 	 * @return The document's id
 	 */
-	public String addDocument(VocidexDocument document) {
-        return client
-				.prepareIndex(indexName, document.getType(), document.getId())
-				.setSource(document.getJSONContents())
-				.execute().actionGet().getId();
+	public String addDocument(VocidexDocument document) throws IOException {
+		connect();
+		return client.index(idx -> 
+			idx.index(indexName)
+				.id(document.getId())
+				.withJson(new java.io.StringReader(document.getJSONContents()))
+		).id();
 	}
 }

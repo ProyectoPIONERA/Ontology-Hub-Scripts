@@ -1,0 +1,41 @@
+@prefix : <http://example.org/countries#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+:CountriesVocab a owl:Ontology ;
+    dc:title "Countries Vocabulary" ;
+    dc:description "A vocabulary describing countries and territories" ;
+    dc:creator <#geoDataOrg> ;
+    dc:date "2026-02-09"^^xsd:date ;
+    rdfs:label "Countries Vocabulary"@en ;
+    dc:subject "geography", "countries", "places" .
+
+:Country a owl:Class ;
+    rdfs:label "Country"@en ;
+    rdfs:comment "A sovereign nation-state"@en ;
+    rdfs:subClassOf owl:Thing ;
+    skos:definition "An independent state with its own government"@en .
+
+:hasCapital a owl:ObjectProperty ;
+    rdfs:label "has capital"@en ;
+    rdfs:comment "Relates a country to its capital city"@en ;
+    rdfs:domain :Country ;
+    rdfs:range :City .
+
+:hasPopulation a owl:DatatypeProperty ;
+    rdfs:label "has population"@en ;
+    rdfs:comment "The population count of a country"@en ;
+    rdfs:domain :Country ;
+    rdfs:range xsd:integer .
+
+:City a owl:Class ;
+    rdfs:label "City"@en ;
+    rdfs:comment "An urban settlement"@en ;
+    rdfs:subClassOf owl:Thing .
+
+:geoDataOrg a foaf:Organization ;
+    foaf:name "Geo Data Organization" ;
+    foaf:mbox "info@geodata.org" ;
+    foaf:homepage "http://geodata.org" .
