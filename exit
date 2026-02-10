@@ -1,0 +1,134 @@
+warning: in the working copy of 'createQueries.sh', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/resources/queries/lov-term-metrics.sparql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/resources/queries/lov-vocabulary-terms.sparql', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/src/main/java/org/lov/vocidex/describers/LOVVocabularyDescriber.java b/src/main/java/org/lov/vocidex/describers/LOVVocabularyDescriber.java[m
+[1mindex 37b4e8d..cc3a5cf 100644[m
+[1m--- a/src/main/java/org/lov/vocidex/describers/LOVVocabularyDescriber.java[m
+[1m+++ b/src/main/java/org/lov/vocidex/describers/LOVVocabularyDescriber.java[m
+[36m@@ -28,7 +28,22 @@[m [mpublic class LOVVocabularyDescriber extends SPARQLDescriber {[m
+ 		putString(descriptionRoot, "uri", vocabulary.getURI());[m
+ 		System.out.println(vocabulary.getURI());[m
+ 		putString(descriptionRoot, "prefix", qs.get("prefix").asLiteral().getLexicalForm()); [m
+[31m-		[m
+[32m+[m
+[32m+[m		[32m// License[m
+[32m+[m		[32mQuerySolution qsLic = getSource().getOneSolution([m
+[32m+[m				[32m"describe-lov-vocab-license.sparql",[m
+[32m+[m				[32m"vocab",[m
+[32m+[m				[32mvocabulary[m
+[32m+[m		[32m);[m
+[32m+[m
+[32m+[m		[32mif (qsLic != null && qsLic.get("license") != null) {[m
+[32m+[m			[32mif (qsLic.get("license").isResource()) {[m
+[32m+[m				[32mputString(descriptionRoot, "license", qsLic.get("license").asResource().getURI());[m
+[32m+[m			[32m} else {[m
+[32m+[m				[32mputString(descriptionRoot, "license", qsLic.get("license").asLiteral().getLexicalForm());[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m
+[32m+[m
+ 		ResultSet rsTitles = getSource().getResultSet("describe-lov-vocab-titles.sparql", "vocab", vocabulary);[m
+ 		while(rsTitles.hasNext()){[m
+ 			QuerySolution qs2 = rsTitles.next();[m
+[1mdiff --git a/src/main/java/org/lov/vocidex/extract/VocabularyTermExtractor.java b/src/main/java/org/lov/vocidex/extract/VocabularyTermExtractor.java[m
+[1mindex b6b074c..ee43ae0 100644[m
+[1m--- a/src/main/java/org/lov/vocidex/extract/VocabularyTermExtractor.java[m
+[1m+++ b/src/main/java/org/lov/vocidex/extract/VocabularyTermExtractor.java[m
+[36m@@ -1,5 +1,6 @@[m
+ package org.lov.vocidex.extract;[m
+ [m
+[32m+[m[32mimport java.util.Collection;[m
+ import java.util.Iterator;[m
+ [m
+ import org.lov.SPARQLRunner;[m
+[1mdiff --git a/src/main/resources/mappings/vocabulary.json b/src/main/resources/mappings/vocabulary.json[m
+[1mindex aca9f3d..24d08b4 100644[m
+[1m--- a/src/main/resources/mappings/vocabulary.json[m
+[1m+++ b/src/main/resources/mappings/vocabulary.json[m
+[36m@@ -14,6 +14,7 @@[m
+       },[m
+       "tags":{"type": "string", "index": "not_analyzed" },[m
+       "langs":{"type": "string", "index": "not_analyzed" },[m
+[32m+[m[32m      "licenses": { "type": "string", "index": "not_analyzed" },[m
+ 	   "uri":{[m
+         "type":"multi_field",[m
+         "fields":{[m
+[1mdiff --git a/src/main/resources/queries/dynamic/lov-vocabulary-terms.sparql b/src/main/resources/queries/dynamic/lov-vocabulary-terms.sparql[m
+[1mindex 28ec5de..2d8d8c7 100644[m
+[1m--- a/src/main/resources/queries/dynamic/lov-vocabulary-terms.sparql[m
+[1m+++ b/src/main/resources/queries/dynamic/lov-vocabulary-terms.sparql[m
+[36m@@ -1,50 +1,46 @@[m
+ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>[m
+[31m-PREFIX owl: <http://www.w3.org/2002/07/owl#>[m
+[32m+[m[32mPREFIX owl:  <http://www.w3.org/2002/07/owl#>[m
+ PREFIX voaf: <http://purl.org/vocommons/voaf#>[m
+ PREFIX vann: <http://purl.org/vocab/vann/>[m
+[31m-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>[m
+[32m+[m[32mPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>[m
+[32m+[m
+[32m+[m[32mPREFIX dcterms: <http://purl.org/dc/terms/>[m
+[32m+[m[32mPREFIX cc:      <http://creativecommons.org/ns#>[m
+[32m+[m[32mPREFIX schema:  <http://schema.org/>[m
+ [m
+ # ?term A term (class, property or datatype)[m
+ # ?vocab The vocabulary that defines the term, according to LOV metadata[m
+[31m-SELECT ?term ?vocab {[m
+[32m+[m[32m# ?license The vocabulary's license (if known)[m
+[32m+[m[32mSELECT ?term ?vocab (COALESCE(?licLov, ?licGraph, ?licCC, ?licSchema) AS ?license) {[m
+ [m
+[31m-  # Find all vocabularies, with the attached[m
+[31m-  # preferred namespace URI, from LOV metadata[m
+   GRAPH <LOV_DATASET_URI> {[m
+[31m-    ?vocab a voaf:Vocabulary;[m
+[31m-      vann:preferredNamespaceUri ?ns[m
+[32m+[m[32m    ?vocab a voaf:Vocabulary ;[m
+[32m+[m[32m           vann:preferredNamespaceUri ?ns .[m
+[32m+[m
+[32m+[m[32m    OPTIONAL { ?vocab dcterms:license ?licLov }[m
+   }[m
+ [m
+[31m-  # Now find all terms mentioned in the aggregated vocabulary graphs[m
+[31m-  # We use DISTINCT to get only one match for terms that are defined[m
+[31m-  # for example as both rdfs:Class and owl:Class[m
+   {[m
+[31m-    SELECT DISTINCT ?vocab ?term {[m
+[32m+[m[32m    SELECT DISTINCT ?vocab ?term ?licGraph ?licCC ?licSchema {[m
+       GRAPH ?vocab {[m
+         { ?term a rdfs:Class }[m
+[31m-        UNION[m
+[31m-        { ?term a owl:Class }[m
+[31m-        UNION[m
+[31m-        { ?term a rdf:Property }[m
+[31m-        UNION[m
+[31m-        { ?term a owl:DatatypeProperty }[m
+[31m-        UNION[m
+[31m-        { ?term a owl:ObjectProperty }[m
+[31m-        UNION[m
+[31m-        { ?term a owl:AnnotationProperty }[m
+[31m-        UNION[m
+[31m-        { ?term a rdfs:Datatype }[m
+[31m-        UNION[m
+[31m-        { ?term a owl:NamedIndividual . }[m
+[32m+[m[32m        UNION { ?term a owl:Class }[m
+[32m+[m[32m        UNION { ?term a rdf:Property }[m
+[32m+[m[32m        UNION { ?term a owl:DatatypeProperty }[m
+[32m+[m[32m        UNION { ?term a owl:ObjectProperty }[m
+[32m+[m[32m        UNION { ?term a owl:AnnotationProperty }[m
+[32m+[m[32m        UNION { ?term a rdfs:Datatype }[m
+[32m+[m[32m        UNION { ?term a owl:NamedIndividual . }[m
+ [m
+         FILTER isURI(?term)[m
+[32m+[m
+[32m+[m[32m        # Licencia declarada dentro del propio grafo del vocabulario (si existe)[m
+[32m+[m[32m        OPTIONAL { ?vocab dcterms:license ?licGraph }[m
+[32m+[m[32m        OPTIONAL { ?vocab cc:license ?licCC }[m
+[32m+[m[32m        OPTIONAL { ?vocab schema:license ?licSchema }[m
+       }[m
+     }[m
+   }[m
+ [m
+[31m-  # Keep only those terms that start with the vocabulary's[m
+[31m-  # preferred namespace URI, thus excluding cases where[m
+[31m-  # a term is only mentioned, but not authoritatively[m
+[31m-  # defined, in a graph[m
+   FILTER (STRSTARTS(STR(?term), STR(?ns)))[m
+ }[m

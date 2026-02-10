@@ -1,5 +1,6 @@
 package org.lov.vocidex.extract;
 
+import java.util.Collection;
 import java.util.Iterator;
 
 import org.lov.SPARQLRunner;
