@@ -1,50 +1,46 @@
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
 PREFIX voaf: <http://purl.org/vocommons/voaf#>
 PREFIX vann: <http://purl.org/vocab/vann/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX cc:      <http://creativecommons.org/ns#>
+PREFIX schema:  <http://schema.org/>
 
 # ?term A term (class, property or datatype)
 # ?vocab The vocabulary that defines the term, according to LOV metadata
-SELECT ?term ?vocab {
+# ?license The vocabulary's license (if known)
+SELECT ?term ?vocab (COALESCE(?licLov, ?licGraph, ?licCC, ?licSchema) AS ?license) {
 
-  # Find all vocabularies, with the attached
-  # preferred namespace URI, from LOV metadata
   GRAPH <LOV_DATASET_URI> {
-    ?vocab a voaf:Vocabulary;
-      vann:preferredNamespaceUri ?ns
+    ?vocab a voaf:Vocabulary ;
+           vann:preferredNamespaceUri ?ns .
+
+    OPTIONAL { ?vocab dcterms:license ?licLov }
   }
 
-  # Now find all terms mentioned in the aggregated vocabulary graphs
-  # We use DISTINCT to get only one match for terms that are defined
-  # for example as both rdfs:Class and owl:Class
   {
-    SELECT DISTINCT ?vocab ?term {
+    SELECT DISTINCT ?vocab ?term ?licGraph ?licCC ?licSchema {
       GRAPH ?vocab {
         { ?term a rdfs:Class }
-        UNION
-        { ?term a owl:Class }
-        UNION
-        { ?term a rdf:Property }
-        UNION
-        { ?term a owl:DatatypeProperty }
-        UNION
-        { ?term a owl:ObjectProperty }
-        UNION
-        { ?term a owl:AnnotationProperty }
-        UNION
-        { ?term a rdfs:Datatype }
-        UNION
-        { ?term a owl:NamedIndividual . }
+        UNION { ?term a owl:Class }
+        UNION { ?term a rdf:Property }
+        UNION { ?term a owl:DatatypeProperty }
+        UNION { ?term a owl:ObjectProperty }
+        UNION { ?term a owl:AnnotationProperty }
+        UNION { ?term a rdfs:Datatype }
+        UNION { ?term a owl:NamedIndividual . }
 
         FILTER isURI(?term)
+
+        # Licencia declarada dentro del propio grafo del vocabulario (si existe)
+        OPTIONAL { ?vocab dcterms:license ?licGraph }
+        OPTIONAL { ?vocab cc:license ?licCC }
+        OPTIONAL { ?vocab schema:license ?licSchema }
       }
     }
   }
 
-  # Keep only those terms that start with the vocabulary's
-  # preferred namespace URI, thus excluding cases where
-  # a term is only mentioned, but not authoritatively
-  # defined, in a graph
   FILTER (STRSTARTS(STR(?term), STR(?ns)))
 }
