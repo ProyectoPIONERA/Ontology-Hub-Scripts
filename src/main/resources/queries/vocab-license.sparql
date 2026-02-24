@@ -1,0 +1,11 @@
+SELECT DISTINCT ?lic WHERE {
+  VALUES ?p {
+    <http://purl.org/dc/terms/license>
+    <http://creativecommons.org/ns#license>
+    <https://schema.org/license>
+    <http://schema.org/license>
+  }
+
+  # Licencia declarada sobre la ontología
+  ?s ?p ?lic .
+}
