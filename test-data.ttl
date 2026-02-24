@@ -1,0 +1,46 @@
+@prefix : <http://example.org/test#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:TestVocab a owl:Ontology ;
+    dc:title "Test Vocabulary for ES9" ;
+    dc:description "A simple test vocabulary for Elasticsearch 9 testing" ;
+    dc:creator <#testCreator> ;
+    dc:date "2026-02-09"^^xsd:date ;
+    rdfs:label "Test Vocabulary"@en ;
+    rdfs:comment "Test vocabulary created for ES9 integration testing"@en .
+
+:TestClass a owl:Class ;
+    rdfs:label "Test Class"@en ;
+    rdfs:comment "A test class for validation"@en ;
+    rdfs:subClassOf owl:Thing .
+
+:TestSubClass a owl:Class ;
+    rdfs:label "Test SubClass"@en ;
+    rdfs:comment "A test subclass"@en ;
+    rdfs:subClassOf :TestClass .
+
+:testProperty a owl:DatatypeProperty ;
+    rdfs:label "test property"@en ;
+    rdfs:comment "A test datatype property"@en ;
+    rdfs:domain :TestClass ;
+    rdfs:range xsd:string .
+
+:testObjectProperty a owl:ObjectProperty ;
+    rdfs:label "test object property"@en ;
+    rdfs:comment "A test object property"@en ;
+    rdfs:domain :TestClass ;
+    rdfs:range :TestSubClass .
+
+:testCreator a foaf:Person ;
+    foaf:name "Test Creator" ;
+    foaf:mbox "test@example.org" ;
+    foaf:homepage "http://example.org/testcreator" .
+
+:testOrganization a foaf:Organization ;
+    foaf:name "Test Organization" ;
+    foaf:homepage "http://example.org" ;
+    foaf:member <#testCreator> .
