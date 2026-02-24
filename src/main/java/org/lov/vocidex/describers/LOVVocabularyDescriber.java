@@ -28,7 +28,22 @@ public class LOVVocabularyDescriber extends SPARQLDescriber {
 		putString(descriptionRoot, "uri", vocabulary.getURI());
 		System.out.println(vocabulary.getURI());
 		putString(descriptionRoot, "prefix", qs.get("prefix").asLiteral().getLexicalForm()); 
-		
+
+		// License
+		QuerySolution qsLic = getSource().getOneSolution(
+				"describe-lov-vocab-license.sparql",
+				"vocab",
+				vocabulary
+		);
+
+		if (qsLic != null && qsLic.get("license") != null) {
+			if (qsLic.get("license").isResource()) {
+				putString(descriptionRoot, "license", qsLic.get("license").asResource().getURI());
+			} else {
+				putString(descriptionRoot, "license", qsLic.get("license").asLiteral().getLexicalForm());
+			}
+		}
+
 		ResultSet rsTitles = getSource().getResultSet("describe-lov-vocab-titles.sparql", "vocab", vocabulary);
 		while(rsTitles.hasNext()){
 			QuerySolution qs2 = rsTitles.next();
