@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.UnknownHostException;
+import java.io.IOException;
 import java.util.Properties;
 /**
  * A command line tool that indexes an LOV dump, adding all vocabularies
@@ -118,7 +118,7 @@ public class ElasticsearchIndexLOV extends CmdGeneral {
                     index.addDocument(document);
                 }
                 log.info("Done!");
-            } catch (UnknownHostException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 index.close();

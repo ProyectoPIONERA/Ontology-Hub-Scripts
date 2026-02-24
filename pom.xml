@@ -24,7 +24,7 @@
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.2</version>
+      <version>1.15</version>
     </dependency>
     <dependency>
       <groupId>commons-httpclient</groupId>
@@ -89,9 +89,14 @@
       <version>1.9.12</version>
     </dependency>
     <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-      <version>2.4.4</version>
+      <groupId>co.elastic.clients</groupId>
+      <artifactId>elasticsearch-java</artifactId>
+      <version>8.18.8</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.17.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -104,8 +109,8 @@
   
   <repositories>
     <repository>
-       <id>cloudbees-jongo-early-release</id>
-        <url>http://repository-jongo.forge.cloudbees.com/release</url>
+        <id>central</id>
+        <url>https://repo1.maven.org/maven2</url>
         <releases>
             <enabled>true</enabled>
         </releases>
@@ -159,7 +164,7 @@
         <configuration>
           <repositoryLayout>flat</repositoryLayout>
           <repositoryName>lib</repositoryName>
-          <installArtifacts>false</installArtifacts>
+
           <programs>
             <program>
               <mainClass>org.lov.cli.Aggregator</mainClass>
