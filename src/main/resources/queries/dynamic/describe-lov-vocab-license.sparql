@@ -1,0 +1,16 @@
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX cc: <http://creativecommons.org/ns#>
+PREFIX schema: <http://schema.org/>
+
+SELECT ?license WHERE {
+  GRAPH ?vocab {
+    { ?vocab dcterms:license ?license }
+    UNION { ?vocab cc:license ?license }
+    UNION { ?vocab schema:license ?license }
+    UNION { ?onto a owl:Ontology ; dcterms:license ?license }
+    UNION { ?onto a owl:Ontology ; cc:license ?license }
+    UNION { ?onto a owl:Ontology ; schema:license ?license }
+  }
+}
+LIMIT 1
