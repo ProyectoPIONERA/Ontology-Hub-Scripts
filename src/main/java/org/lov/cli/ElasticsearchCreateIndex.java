@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.IOException;
 import java.util.Properties;
 
 import org.lov.config.ElasticsearchConfig;
@@ -66,7 +65,7 @@ public class ElasticsearchCreateIndex extends CmdGeneral {
     @Override
     protected void exec() {
         VocidexIndex index = new VocidexIndex(elastic.clusterName, elastic.hostName, elastic.indexName,
-                elastic.user, elastic.password);
+                elastic.user, elastic.password, elastic.mappingsPath);
         try {
             if (index.exists()) {
                 log.info("Deleting index: " + elastic.indexName);

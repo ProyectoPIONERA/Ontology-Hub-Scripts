@@ -99,7 +99,7 @@ public class ElasticsearchIndexLOV extends CmdGeneral {
             log.info("TDB bulk load finished.");
             log.info("Hostname: " + elastic.hostName);
             VocidexIndex index = new VocidexIndex(elastic.clusterName, elastic.hostName, elastic.indexName,
-                    elastic.user, elastic.password);
+                    elastic.user, elastic.password, elastic.mappingsPath);
             try {
                 if (!index.exists()) {
                     throw new VocidexException("Index '" + elastic.indexName + "' does not exist on the cluster. Create the index first!");

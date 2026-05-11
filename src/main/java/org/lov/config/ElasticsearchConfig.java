@@ -13,14 +13,17 @@ public final class ElasticsearchConfig {
     public final String indexName;
     public final String user;
     public final String password;
+    /** Absolute path to directory with settings.json and type mapping JSON files (used by create-index). */
+    public final String mappingsPath;
 
     private ElasticsearchConfig(String clusterName, String hostName, String indexName, String user,
-                                String password) {
+                                String password, String mappingsPath) {
         this.clusterName = clusterName;
         this.hostName = hostName;
         this.indexName = indexName;
         this.user = user;
         this.password = password;
+        this.mappingsPath = mappingsPath;
     }
 
     public static ElasticsearchConfig fromProperties(Properties p) {
@@ -35,7 +38,8 @@ public final class ElasticsearchConfig {
         if (password == null) {
             password = "OntologyHub2026";
         }
-        return new ElasticsearchConfig(cluster, host, index, user, password);
+        String mappings = firstNonBlank(p, "ELASTICSEARCH_MAPPINGS_PATH", "ELASTIC_MAPPINGS_PATH");
+        return new ElasticsearchConfig(cluster, host, index, user, password, mappings);
     }
 
     private static String firstNonBlank(Properties p, String... keys) {
