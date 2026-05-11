@@ -102,7 +102,15 @@ public class ElasticsearchIndexLOV extends CmdGeneral {
                     elastic.user, elastic.password, elastic.mappingsPath);
             try {
                 if (!index.exists()) {
-                    throw new VocidexException("Index '" + elastic.indexName + "' does not exist on the cluster. Create the index first!");
+                    String source = (elastic.mappingsPath != null && !elastic.mappingsPath.trim().isEmpty())
+                            ? "directory " + elastic.mappingsPath.trim()
+                            : "packaged classpath mappings";
+                    log.info("Index '{}' not found; creating it from {}.", elastic.indexName, source);
+                    if (!index.create()) {
+                        throw new VocidexException("Failed to create index '" + elastic.indexName
+                                + "'. Run create-index with the same config or check Elasticsearch logs.");
+                    }
+                    log.info("Index '{}' created.", elastic.indexName);
                 }
 
                 /* Process Agents */

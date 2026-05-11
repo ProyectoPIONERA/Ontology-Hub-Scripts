@@ -1,6 +1,7 @@
 package org.lov.vocidex;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -37,12 +38,42 @@ public class JSONHelper {
     }
 
     /**
-     * Reads a JSON file from a location relative to /src/main/resources
+     * Reads a JSON resource from the classpath (typically under {@code src/main/resources}).
+     * Tries several class loaders because some launchers (e.g. Jena ARQ {@code CmdMain}) can leave
+     * {@code VocidexIndex}'s loader unable to see resources from the application JAR.
      */
     public static String readFile(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            throw new VocidexException("Resource name is empty");
+        }
+        String slashName = fileName.startsWith("/") ? fileName : "/" + fileName;
+        String bareName = slashName.startsWith("/") ? slashName.substring(1) : slashName;
+
+        InputStream in = JSONHelper.class.getResourceAsStream(slashName);
+        if (in == null) {
+            in = VocidexIndex.class.getResourceAsStream(slashName);
+        }
+        if (in == null) {
+            ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+            if (tccl != null) {
+                in = tccl.getResourceAsStream(bareName);
+            }
+        }
+        if (in == null) {
+            ClassLoader cl = JSONHelper.class.getClassLoader();
+            if (cl != null) {
+                in = cl.getResourceAsStream(bareName);
+            }
+        }
+        if (in == null) {
+            in = ClassLoader.getSystemResourceAsStream(bareName);
+        }
+        if (in == null) {
+            throw new VocidexException("Classpath resource not found: " + bareName
+                    + " (ensure lovscripts JAR on classpath contains /mappings/*.json)");
+        }
         try {
-            return FileUtils.readWholeFileAsUTF8(
-                    VocidexIndex.class.getResourceAsStream("/" + fileName));
+            return FileUtils.readWholeFileAsUTF8(in);
         } catch (IOException ex) {
             throw new VocidexException(ex);
         }
