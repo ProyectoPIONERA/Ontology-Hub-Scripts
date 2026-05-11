@@ -1,7 +1,12 @@
 package org.lov.cli;
 
 import arq.cmdline.CmdGeneral;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.tdb.TDBFactory;
+import com.hp.hpl.jena.tdb.TDBLoader;
+import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
+import com.hp.hpl.jena.tdb.transaction.DatasetGraphTransaction;
 import org.lov.config.ElasticsearchConfig;
 import org.lov.vocidex.VocidexDocument;
 import org.lov.vocidex.VocidexException;
@@ -11,8 +16,11 @@ import org.lov.vocidex.extract.LOVExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 /**
  * A command line tool that indexes an LOV dump, adding all vocabularies
@@ -70,25 +78,25 @@ public class ElasticsearchIndexLOV extends CmdGeneral {
 
         try {
             log.info("Loading LOV dump into TDB (disk): " + lovDumpFile);
+            log.info("TDB directory: " + lovTMPDumpPath + " (use an empty directory for bulk load when retrying)");
 
             String tdbDir = lovTMPDumpPath;
 
-            com.hp.hpl.jena.query.Dataset dataset = TDBFactory.createDataset(tdbDir);
+            Dataset dataset = TDBFactory.createDataset(tdbDir);
 
-            // Ingesta del N-Quads al dataset en disco
-            org.apache.jena.riot.RDFDataMgr.read(dataset, lovDumpFile, org.apache.jena.riot.Lang.NQUADS);
-
-            long graphCount = 0L;
-            long tripleCount = dataset.getDefaultModel().size();
-            java.util.Iterator<String> it = dataset.listNames();
-            String aux;
-            while (it.hasNext()) {
-                graphCount++;
-                aux = it.next();
-
-                tripleCount += dataset.getNamedModel(aux).size();
+            // TDBLoader uses the bulk loader (smaller heap footprint than RDFDataMgr.read for large N-Quads).
+            DatasetGraph dsgWrapped = dataset.asDatasetGraph();
+            DatasetGraphTDB dsgTdb;
+            if (dsgWrapped instanceof DatasetGraphTransaction) {
+                dsgTdb = ((DatasetGraphTransaction) dsgWrapped).getBaseDatasetGraph();
+            } else if (dsgWrapped instanceof DatasetGraphTDB) {
+                dsgTdb = (DatasetGraphTDB) dsgWrapped;
+            } else {
+                throw new IllegalStateException("Expected TDB-backed dataset, got: " + dsgWrapped.getClass().getName());
             }
-            log.info("Read " + tripleCount + " triples in " + graphCount + " graphs");
+            TDBLoader.load(dsgTdb, lovDumpFile, true);
+
+            log.info("TDB bulk load finished.");
             log.info("Hostname: " + elastic.hostName);
             VocidexIndex index = new VocidexIndex(elastic.clusterName, elastic.hostName, elastic.indexName,
                     elastic.user, elastic.password);
