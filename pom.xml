@@ -181,8 +181,8 @@
                 <configuration>
                     <repositoryLayout>flat</repositoryLayout>
                     <repositoryName>lib</repositoryName>
-                    <!-- Picks up every JAR in lib/; avoids NoClassDefFoundError when bin/ script and lib/ get out of sync. -->
-                    <useWildcardClassPath>true</useWildcardClassPath>
+                    <!-- Wildcard "$REPO"/* breaks on some /bin/sh (e.g. dash): glob or word-splitting drops jars → NoClassDefFoundError for httpclient. -->
+                    <useWildcardClassPath>false</useWildcardClassPath>
 
                     <programs>
                         <program>
