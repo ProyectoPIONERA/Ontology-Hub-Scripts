@@ -99,37 +99,79 @@ public class ElasticsearchIndexLOV extends CmdGeneral {
             log.info("TDB bulk load finished.");
             log.info("Hostname: " + elastic.hostName);
             VocidexIndex index = new VocidexIndex(elastic.clusterName, elastic.hostName, elastic.indexName,
-                    elastic.user, elastic.password, elastic.mappingsPath);
+                    elastic.user, elastic.password, elastic.mappingsPath, elastic.perTypeIndices);
             try {
                 if (!index.exists()) {
                     String source = (elastic.mappingsPath != null && !elastic.mappingsPath.trim().isEmpty())
                             ? "directory " + elastic.mappingsPath.trim()
                             : "packaged classpath mappings";
-                    log.info("Index '{}' not found; creating it from {}.", elastic.indexName, source);
-                    if (!index.create()) {
-                        throw new VocidexException("Failed to create index '" + elastic.indexName
-                                + "'. Run create-index with the same config or check Elasticsearch logs.");
+                    String target = elastic.perTypeIndices
+                            ? "indices " + elastic.indexName + "_{class|property|...}"
+                            : "index '" + elastic.indexName + "'";
+                    log.info("{} not found; creating from {}.", target, source);
+                    if (elastic.perTypeIndices) {
+                        log.info("Clearing any partial per-type indices before create (prefix: {}).", elastic.indexName);
+                        index.delete();
                     }
-                    log.info("Index '{}' created.", elastic.indexName);
+                    if (!index.create()) {
+                        throw new VocidexException("Failed to create Elasticsearch indices. Run create-index with the same config or check Elasticsearch logs.");
+                    }
+                    log.info("Elasticsearch indices created (per-type=" + elastic.perTypeIndices + ").");
                 }
 
                 /* Process Agents */
                 log.info("--Inserting Agents--");
                 AgentsExtractor agentExtractor = new AgentsExtractor(dataset);
-                int cpt = 0;
+                int agentsIndexed = 0;
+                int agentsSkipped = 0;
                 for (VocidexDocument document : agentExtractor) {
-                    index.addDocument(document);
-                    cpt++;
+                    if (elastic.indexContinueOnError) {
+                        try {
+                            index.addDocument(document);
+                            agentsIndexed++;
+                        } catch (IOException e) {
+                            agentsSkipped++;
+                            log.warn("Skipping agent document id={} type={}: {}",
+                                    document.getId(), document.getType(), e.getMessage());
+                        }
+                    } else {
+                        index.addDocument(document);
+                        agentsIndexed++;
+                    }
                 }
-                log.info(cpt + " Agents inserted");
+                if (agentsSkipped > 0) {
+                    log.warn("Agents finished: {} indexed, {} skipped", agentsIndexed, agentsSkipped);
+                } else {
+                    log.info(agentsIndexed + " Agents inserted");
+                }
 
                 /* Process LOV */
                 log.info("--Inserting LOV--");
                 LOVExtractor lovTransformer = new LOVExtractor(dataset);
+                int lovIndexed = 0;
+                int lovSkipped = 0;
                 for (VocidexDocument document : lovTransformer) {
                     log.info("Indexing " + document.getId());
-
-                    index.addDocument(document);
+                    if (elastic.indexContinueOnError) {
+                        try {
+                            index.addDocument(document);
+                            lovIndexed++;
+                        } catch (IOException e) {
+                            lovSkipped++;
+                            log.warn("Skipping LOV document id={} type={}: {}",
+                                    document.getId(), document.getType(), e.getMessage());
+                        }
+                    } else {
+                        index.addDocument(document);
+                        lovIndexed++;
+                    }
+                }
+                if (lovSkipped > 0) {
+                    log.warn("LOV terms/vocabs finished: {} indexed, {} skipped", lovIndexed, lovSkipped);
+                }
+                if (elastic.indexFailOnSkipped && (agentsSkipped + lovSkipped) > 0) {
+                    throw new VocidexException("Elasticsearch indexing skipped "
+                            + (agentsSkipped + lovSkipped) + " document(s); see warnings above.");
                 }
                 log.info("Done!");
             } catch (IOException e) {

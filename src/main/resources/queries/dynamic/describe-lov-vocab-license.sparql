@@ -1,0 +1,18 @@
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX cc: <http://creativecommons.org/ns#>
+PREFIX schema: <http://schema.org/>
+PREFIX schemaHttps: <https://schema.org/>
+
+# Parameters: ?vocab — vocabulary resource (from LOV metadata graph)
+SELECT ?license WHERE {
+  GRAPH <LOV_DATASET_URI> {
+    { ?vocab dct:license ?license . }
+    UNION
+    { ?vocab cc:license ?license . }
+    UNION
+    { ?vocab schema:license ?license . }
+    UNION
+    { ?vocab schemaHttps:license ?license . }
+  }
+}
+LIMIT 1
