@@ -1,7 +1,13 @@
 package org.lov.cli;
 
 import arq.cmdline.CmdGeneral;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.tdb.TDBFactory;
+import com.hp.hpl.jena.tdb.TDBLoader;
+import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
+import com.hp.hpl.jena.tdb.transaction.DatasetGraphTransaction;
+import org.lov.config.ElasticsearchConfig;
 import org.lov.vocidex.VocidexDocument;
 import org.lov.vocidex.VocidexException;
 import org.lov.vocidex.VocidexIndex;
@@ -10,93 +16,101 @@ import org.lov.vocidex.extract.LOVExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 /**
  * A command line tool that indexes an LOV dump, adding all vocabularies
  * and their terms to the index. Uses {@link LOVExtractor}.
- * 
+ *
  * @author Richard Cyganiak
  */
 public class ElasticsearchIndexLOV extends CmdGeneral {
-	private final static Logger log = LoggerFactory.getLogger(ElasticsearchIndexLOV.class);
-	
-	public static void main(String... args) {
-		new ElasticsearchIndexLOV(args).mainRun();
-	}
+    private final static Logger log = LoggerFactory.getLogger(ElasticsearchIndexLOV.class);
 
-	private String clusterName;
-	private String hostName;
-	private String indexName;
-	private String lovDumpFile;
+    public static void main(String... args) {
+        new ElasticsearchIndexLOV(args).mainRun();
+    }
+
+    private ElasticsearchConfig elastic;
+    private String lovDumpFile;
     private String lovTMPDumpPath;
-	
-	public ElasticsearchIndexLOV(String[] args) {
-		super(args);
-		getUsage().startCategory("Arguments");
-		getUsage().addUsage("configFilePath", "absolute path for the configuration file  (e.g. /home/...)");
-	}
-	
-	@Override
+
+    public ElasticsearchIndexLOV(String[] args) {
+        super(args);
+        getUsage().startCategory("Arguments");
+        getUsage().addUsage("configFilePath", "absolute path for the configuration file  (e.g. /home/...)");
+    }
+
+    @Override
     protected String getCommandName() { return "index-lov"; }
-	@Override
-	protected String getSummary() { return getCommandName() + " clusterName hostname indexName lov.nq"; }
+    @Override
+    protected String getSummary() { return getCommandName() + " clusterName hostname indexName lov.nq"; }
 
-	@Override
-	protected void processModulesAndArgs() {
-		if (getPositional().size() < 1) {
-			doHelp();
-		}
-		String configFilePath = getPositionalArg(0);
-		//load properties from the config file
-		try {
-			Properties lovConfig = new Properties();
-			File file = new File(configFilePath);
-			InputStream is = new FileInputStream(file);
-			lovConfig.load(is);
-			hostName= lovConfig.getProperty("ELASTICSEARCH_HOST");
-			clusterName = lovConfig.getProperty("ELASTICSEARCH_CLUSTER");
-			indexName = lovConfig.getProperty("ELASTICSEARCH_INDEX_NAME");
-			lovDumpFile = lovConfig.getProperty("LOV_NQ_FILE_PATH");
+    @Override
+    protected void processModulesAndArgs() {
+        if (getPositional().size() < 1) {
+            doHelp();
+        }
+        String configFilePath = getPositionalArg(0);
+        //load properties from the config file
+        try {
+            Properties lovConfig = new Properties();
+            File file = new File(configFilePath);
+            InputStream is = new FileInputStream(file);
+            lovConfig.load(is);
+            elastic = ElasticsearchConfig.fromProperties(lovConfig);
+            lovDumpFile = lovConfig.getProperty("LOV_NQ_FILE_PATH");
             lovTMPDumpPath = lovConfig.getProperty("LOV_TMP_DUMP_PATH");
-			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
-	@Override
-	protected void exec() {
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void exec() {
 
         try {
             log.info("Loading LOV dump into TDB (disk): " + lovDumpFile);
+            log.info("TDB directory: " + lovTMPDumpPath + " (use an empty directory for bulk load when retrying)");
 
             String tdbDir = lovTMPDumpPath;
 
-            com.hp.hpl.jena.query.Dataset dataset = TDBFactory.createDataset(tdbDir);
+            Dataset dataset = TDBFactory.createDataset(tdbDir);
 
-            // Ingesta del N-Quads al dataset en disco
-            org.apache.jena.riot.RDFDataMgr.read(dataset, lovDumpFile, org.apache.jena.riot.Lang.NQUADS);
-
-            long graphCount = 0L;
-            long tripleCount = dataset.getDefaultModel().size();
-            java.util.Iterator<String> it = dataset.listNames();
-            String aux;
-            while (it.hasNext()) {
-                graphCount++;
-                aux = it.next();
-
-                tripleCount += dataset.getNamedModel(aux).size();
+            // TDBLoader uses the bulk loader (smaller heap footprint than RDFDataMgr.read for large N-Quads).
+            DatasetGraph dsgWrapped = dataset.asDatasetGraph();
+            DatasetGraphTDB dsgTdb;
+            if (dsgWrapped instanceof DatasetGraphTransaction) {
+                dsgTdb = ((DatasetGraphTransaction) dsgWrapped).getBaseDatasetGraph();
+            } else if (dsgWrapped instanceof DatasetGraphTDB) {
+                dsgTdb = (DatasetGraphTDB) dsgWrapped;
+            } else {
+                throw new IllegalStateException("Expected TDB-backed dataset, got: " + dsgWrapped.getClass().getName());
             }
-            log.info("Read " + tripleCount + " triples in " + graphCount + " graphs");
-            log.info("Hostname: " + hostName);
-            VocidexIndex index = new VocidexIndex(clusterName, hostName, indexName);
+            TDBLoader.load(dsgTdb, lovDumpFile, true);
+
+            log.info("TDB bulk load finished.");
+            log.info("Hostname: " + elastic.hostName);
+            VocidexIndex index = new VocidexIndex(elastic.clusterName, elastic.hostName, elastic.indexName,
+                    elastic.user, elastic.password, elastic.mappingsPath);
             try {
                 if (!index.exists()) {
-                    throw new VocidexException("Index '" + indexName + "' does not exist on the cluster. Create the index first!");
+                    String source = (elastic.mappingsPath != null && !elastic.mappingsPath.trim().isEmpty())
+                            ? "directory " + elastic.mappingsPath.trim()
+                            : "packaged classpath mappings";
+                    log.info("Index '{}' not found; creating it from {}.", elastic.indexName, source);
+                    if (!index.create()) {
+                        throw new VocidexException("Failed to create index '" + elastic.indexName
+                                + "'. Run create-index with the same config or check Elasticsearch logs.");
+                    }
+                    log.info("Index '{}' created.", elastic.indexName);
                 }
 
                 /* Process Agents */
