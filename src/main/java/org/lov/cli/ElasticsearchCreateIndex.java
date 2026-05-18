@@ -65,13 +65,18 @@ public class ElasticsearchCreateIndex extends CmdGeneral {
     @Override
     protected void exec() {
         VocidexIndex index = new VocidexIndex(elastic.clusterName, elastic.hostName, elastic.indexName,
-                elastic.user, elastic.password, elastic.mappingsPath);
+                elastic.user, elastic.password, elastic.mappingsPath, elastic.perTypeIndices);
         try {
-            if (index.exists()) {
-                log.info("Deleting index: " + elastic.indexName);
+            // Per-type: exists() is true only when every lov_<category> index exists, so a partial
+            // cluster (e.g. only lov_class) leaves exists() false and would skip delete, then PUT fails.
+            if (elastic.perTypeIndices) {
+                log.info("Removing any existing per-type indices (prefix: " + elastic.indexName + ")");
+                index.delete();
+            } else if (index.exists()) {
+                log.info("Deleting index (name: " + elastic.indexName + ")");
                 index.delete();
             }
-            log.info("Creating index: " + elastic.indexName);
+            log.info("Creating indices (per-type=" + elastic.perTypeIndices + ", prefix/name: " + elastic.indexName + ")");
             if (index.create()) {
                 log.info("Done!");
             } else {
