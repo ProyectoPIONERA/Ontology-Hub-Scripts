@@ -97,6 +97,7 @@ createQuery "./src/main/resources/queries/dynamic/agent-name.sparql" "./src/main
 createQuery "./src/main/resources/queries/dynamic/describe-lov-vocab-descs.sparql" "./src/main/resources/queries/rdf2es/describe-lov-vocab-descs.sparql"
 createQuery "./src/main/resources/queries/dynamic/describe-lov-vocab-titles.sparql" "./src/main/resources/queries/rdf2es/describe-lov-vocab-titles.sparql"
 createQuery "./src/main/resources/queries/dynamic/describe-lov-vocab.sparql" "./src/main/resources/queries/rdf2es/describe-lov-vocab.sparql"
+createQuery "./src/main/resources/queries/dynamic/describe-lov-vocab-license.sparql" "./src/main/resources/queries/rdf2es/describe-lov-vocab-license.sparql"
 createQuery "./src/main/resources/queries/dynamic/list-agent-related-vocab.sparql" "./src/main/resources/queries/rdf2es/list-agent-related-vocab.sparql"
 createQuery "./src/main/resources/queries/dynamic/list-lov-organizations.sparql" "./src/main/resources/queries/rdf2es/list-lov-organizations.sparql"
 createQuery "./src/main/resources/queries/dynamic/list-lov-persons.sparql" "./src/main/resources/queries/rdf2es/list-lov-persons.sparql"
