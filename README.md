@@ -2,12 +2,6 @@
 
 A collection of **Java** and **Shell** scripts designed to automate essential tasks for the *Ontology Hub* within the **PIONERA** project. These tools support query generation, Linked Open Vocabularies (LOV) backup, and project packaging.
 
-## 🚧 Project Status
-
-This repository is actively under development. APIs and commands may change between minor versions.
-
----
-
 ## Table of Contents
 
 - [Context and Purpose](#context-and-purpose)
